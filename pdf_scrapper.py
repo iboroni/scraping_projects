@@ -5,14 +5,21 @@ import math
 
 # the goal is to read a pdf and generate a csv with a dataset which can be eaisly manipulated 
 # (e.g. easily sum all values in a column)
-class DataPipeline:
+# it's done using the concept of Object Oriented Programming 
+
+class PdfToCsvPipeline:
+    # the following variables are Class Variables
+    # they are the same for all instances, unless it's modified in the process
+    pipeline_type = 'pdf2csv'
+    num_of_pipes = 0
+
     def __init__(self, data_path):
         self.data_path=data_path
         self.outcome_path=None
         self.dataframes=None
 
-        self.extract()
-        self.transform()
+        PdfToCsvPipeline.num_of_pipes += 1 # increments the numbe rof pipes every time an instance is created
+
     
     def extract(self):
         self.dataframes = tabula.read_pdf(pdf_path, pages="all", stream=True) # to get a specific page just set the number of the page in the argument pages
@@ -69,10 +76,16 @@ class DataPipeline:
 
         # problema, se lermos linha por linha, nao funcionara em arquivos com muitas linhas"
 
-# check my tabula-py environment
-# tabula.environment_info() 
+print("Num of pipes before creating any instances: ", PdfToCsvPipeline.num_of_pipes) 
 pdf_path = os.path.join('pdf_files','fatura_picpay_fevereiro_2024.pdf')
-pipeline = DataPipeline(pdf_path)
+pipeline = PdfToCsvPipeline(pdf_path)
+print(pipeline.__dict__) # print a dic with the pipeline object attributes
+pipeline.extract()
+pipeline.transform()
+print(pipeline.__dict__) 
+print("Num of pipes in the instance created: ", pipeline.num_of_pipes) 
+
+
 # later: don't specify the name of the file, but read every file of the folder
 
 # references
