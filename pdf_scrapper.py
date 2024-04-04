@@ -2,6 +2,8 @@ import tabula
 import os
 import pandas as pd
 import math
+from datetime import datetime
+
 
 # the goal is to read a pdf and generate a csv with a dataset which can be eaisly manipulated 
 # (e.g. easily sum all values in a column)
@@ -10,7 +12,7 @@ import math
 class PdfToCsvPipeline:
     # the following variables are Class Variables
     # they are the same for all instances, unless it's modified in the process
-    pipeline_type = 'pdf2csv'
+    pipeline_type = None
     num_of_pipes = 0
 
     def __init__(self, data_path):
@@ -20,7 +22,16 @@ class PdfToCsvPipeline:
 
         PdfToCsvPipeline.num_of_pipes += 1 # increments the numbe rof pipes every time an instance is created
 
-    
+    @classmethod
+    def set_pipeline_type(cls, type):
+        cls.pipeline_type = type
+
+    @staticmethod
+    def is_weekend(day):
+        if day.weekday() == 5 or day.weekday() == 6:
+            return True 
+        return False
+
     def extract(self):
         self.dataframes = tabula.read_pdf(pdf_path, pages="all", stream=True) # to get a specific page just set the number of the page in the argument pages
         # read_pdf returns list of DataFrames
@@ -82,11 +93,13 @@ pipeline = PdfToCsvPipeline(pdf_path)
 print(pipeline.__dict__) # print a dic with the pipeline object attributes
 pipeline.extract()
 pipeline.transform()
-print(pipeline.__dict__) 
-print("Num of pipes in the instance created: ", pipeline.num_of_pipes) 
+PdfToCsvPipeline.set_pipeline_type('pdf2csv') # setter - setting the class variable using a class method
 
+print("Num of pipes in the instance created: ", pipeline.num_of_pipes) 
+print(pipeline.is_weekend(datetime.now()))
 
 # later: don't specify the name of the file, but read every file of the folder
 
 # references
 # tabula: https://nbviewer.org/github/chezou/tabula-py/blob/master/examples/tabula_example.ipynb
+
