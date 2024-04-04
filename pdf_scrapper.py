@@ -11,8 +11,8 @@ class DataPipeline:
         self.outcome_path=None
         self.dataframes=None
 
-        self.extract(self)
-        self.transform(self)
+        self.extract()
+        self.transform()
     
     def extract(self):
         self.dataframes = tabula.read_pdf(pdf_path, pages="all", stream=True) # to get a specific page just set the number of the page in the argument pages
