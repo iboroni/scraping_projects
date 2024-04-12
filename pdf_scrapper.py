@@ -28,7 +28,7 @@ class PdfToCsvPipeline:
 
     @staticmethod
     def is_weekend(day):
-        if day.weekday() == 5 or day.weekday() == 6:
+        if day.weekday() in [5,6]:
             return True 
         return False
 
@@ -42,12 +42,12 @@ class PdfToCsvPipeline:
         select_columns = list(first_df)[:4]
         print("Selected Columns: ", select_columns)
         df_concat = pd.concat(self.dataframes)
-        df_select_columns = df_concat[select_columns] # later: select directly the first 4 columns instead of doing line 13
+        final_df = df_concat[select_columns] # later: select directly the first 4 columns instead of doing line 13
         new_column_names =  ['data', 'descricao', 'valor', 'saldo']
-        df_select_columns.columns = new_column_names
+        final_df.columns = new_column_names
         head_num = 3
         result_0 = []
-        selected_df = df_select_columns.head(head_num)
+        selected_df = final_df.head(head_num)
 
         # setting new variables for the new column values for the specific row
         new_data, new_descricao, new_valor, new_saldo = '', '', '', ''
@@ -73,13 +73,13 @@ class PdfToCsvPipeline:
         print(new_row)
         # agora só falta fazer isso pro dataframe inteiro e voila!!
 
-        # for row in df_select_columns.head(head_num).iterrows():
+        # for row in final_df.head(head_num).iterrows():
         #     for item in row
         #     print(row[1])
         #     #result_0.append(row})
 
 
-        # print(df_select_columns)
+        # print(final_df)
         # csv_path = os.path.join('csv_files','fatura_picpay_fevereiro_2024.csv')
         # later: don't specify the name of the file, but use the same name as read in line 7
 
@@ -87,16 +87,33 @@ class PdfToCsvPipeline:
 
         # problema, se lermos linha por linha, nao funcionara em arquivos com muitas linhas"
 
+    
+
+    def transform2(self):
+        first_df = self.dataframes[0]
+        select_columns = list(first_df)[:4]
+        df_concat = pd.concat(self.dataframes)
+        final_df = df_concat[select_columns] # later: select directly the first 4 columns instead of doing line 13
+        new_column_names =  ['data', 'descricao', 'valor', 'saldo']
+        final_df.columns = new_column_names
+        print(final_df)
+        N = 3
+        merged_df = final_df.groupby(final_df.index // N).agg(lambda x: ' '.join)
+        print(merged_df)
+
+        # eu posso colocar uma nova coluna que o valor se repete a cada 3 linhas e depois fazer um goroup by por essa coluna
+
+
 print("Num of pipes before creating any instances: ", PdfToCsvPipeline.num_of_pipes) 
+PdfToCsvPipeline.set_pipeline_type('pdf2csv') # setter - setting the class variable using a class method
 pdf_path = os.path.join('pdf_files','fatura_picpay_fevereiro_2024.pdf')
 pipeline = PdfToCsvPipeline(pdf_path)
 print(pipeline.__dict__) # print a dic with the pipeline object attributes
 pipeline.extract()
-pipeline.transform()
-PdfToCsvPipeline.set_pipeline_type('pdf2csv') # setter - setting the class variable using a class method
+pipeline.transform2()
 
-print("Num of pipes in the instance created: ", pipeline.num_of_pipes) 
-print(pipeline.is_weekend(datetime.now()))
+# print("Num of pipes in the instance created: ", pipeline.num_of_pipes) 
+# print(pipeline.is_weekend(datetime.now()))
 
 # later: don't specify the name of the file, but read every file of the folder
 
