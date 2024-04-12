@@ -96,12 +96,14 @@ class PdfToCsvPipeline:
         final_df = df_concat[select_columns] # later: select directly the first 4 columns instead of doing line 13
         new_column_names =  ['data', 'descricao', 'valor', 'saldo']
         final_df.columns = new_column_names
-        print(final_df)
         N = 3
-        merged_df = final_df.groupby(final_df.index // N).agg(lambda x: ' '.join)
-        print(merged_df)
+        merged_df = final_df.groupby(final_df.index // N).agg(lambda x: ' '.join(x.astype(str)))
+        #.reset_index()
+        csv_path = os.path.join('csv_files','fatura_picpay_fevereiro_2024.csv')
+        # later: don't specify the name of the file, but use the same name as read in line 7
 
-        # eu posso colocar uma nova coluna que o valor se repete a cada 3 linhas e depois fazer um goroup by por essa coluna
+        merged_df.to_csv(csv_path, sep=';', index=True, encoding='utf-8')
+
 
 
 print("Num of pipes before creating any instances: ", PdfToCsvPipeline.num_of_pipes) 
