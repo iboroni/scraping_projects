@@ -1,7 +1,6 @@
 import tabula
 import os
 import pandas as pd
-import math
 from datetime import datetime
 
 
@@ -90,34 +89,31 @@ class PdfToCsvPipeline:
     
 
     def transform2(self):
+        csv_path = os.path.join('csv_files','fatura_picpay_fevereiro_2024_before.csv')
         first_df = self.dataframes[0]
         select_columns = list(first_df)[:4]
         df_concat = pd.concat(self.dataframes)
         final_df = df_concat[select_columns] # later: select directly the first 4 columns instead of doing line 13
         new_column_names =  ['data', 'descricao', 'valor', 'saldo']
         final_df.columns = new_column_names
-        N = 3
-        merged_df = final_df.groupby(final_df.index // N).agg(lambda x: ' '.join(x.astype(str)))
-        #.reset_index()
-        csv_path = os.path.join('csv_files','fatura_picpay_fevereiro_2024.csv')
+        # reseting index to be 
+        final_df = final_df.reset_index().astype(str).replace('nan', '')
+        final_df = final_df.groupby(final_df.index//3).agg(lambda x: ' '.join(x))
+        final_df.to_csv(csv_path.replace('before', 'after'), sep=';', index=True, encoding='utf-8')
+
         # later: don't specify the name of the file, but use the same name as read in line 7
 
-        merged_df.to_csv(csv_path, sep=';', index=True, encoding='utf-8')
 
-
-
-print("Num of pipes before creating any instances: ", PdfToCsvPipeline.num_of_pipes) 
+#print("Num of pipes before creating any instances: ", PdfToCsvPipeline.num_of_pipes) 
 PdfToCsvPipeline.set_pipeline_type('pdf2csv') # setter - setting the class variable using a class method
 pdf_path = os.path.join('pdf_files','fatura_picpay_fevereiro_2024.pdf')
 pipeline = PdfToCsvPipeline(pdf_path)
-print(pipeline.__dict__) # print a dic with the pipeline object attributes
+#print(pipeline.__dict__) # print a dic with the pipeline object attributes
 pipeline.extract()
 pipeline.transform2()
 
-# print("Num of pipes in the instance created: ", pipeline.num_of_pipes) 
+# print("Num of pipes created: ", pipeline.num_of_pipes) 
 # print(pipeline.is_weekend(datetime.now()))
-
-# later: don't specify the name of the file, but read every file of the folder
 
 # references
 # tabula: https://nbviewer.org/github/chezou/tabula-py/blob/master/examples/tabula_example.ipynb
