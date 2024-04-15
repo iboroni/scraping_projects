@@ -14,11 +14,13 @@ class PdfToCsvPipeline:
     pipeline_type = None
     num_of_pipes = 0
 
-    def __init__(self, data_path):
-        self.data_path=data_path
-        self.outcome_path=None
+    def __init__(self, input_file):
+        self.input_file=input_file
+        self.input_path=None
+        self.output_path=None
         self.dataframes=None
-
+        self.set_input_path()
+        self.set_output_path()
         PdfToCsvPipeline.num_of_pipes += 1 # increments the numbe rof pipes every time an instance is created
 
     @classmethod
@@ -32,85 +34,36 @@ class PdfToCsvPipeline:
         return False
 
     def extract(self):
-        self.dataframes = tabula.read_pdf(pdf_path, pages="all", stream=True) # to get a specific page just set the number of the page in the argument pages
+        self.dataframes = tabula.read_pdf(self.input_path, pages="all", stream=True) 
+        # to get a specific page just set the number of the page in the argument pages
         # read_pdf returns list of DataFrames
 
-    def transform(self):
-        first_df = self.dataframes[0]
-        print("Columns: ", list(first_df))
-        select_columns = list(first_df)[:4]
-        print("Selected Columns: ", select_columns)
-        df_concat = pd.concat(self.dataframes)
-        final_df = df_concat[select_columns] # later: select directly the first 4 columns instead of doing line 13
-        new_column_names =  ['data', 'descricao', 'valor', 'saldo']
-        final_df.columns = new_column_names
-        head_num = 3
-        result_0 = []
-        selected_df = final_df.head(head_num)
+    def set_input_path(self):
+        self.input_path = os.path.join('pdf_files', self.input_file)
 
-        # setting new variables for the new column values for the specific row
-        new_data, new_descricao, new_valor, new_saldo = '', '', '', ''
-        for row in range(3):
-            for column in new_column_names:
-                value = str(selected_df[column][row])
-                # ignoring nan's and concatenating possible values in other rows
-                if value != 'nan':
-                    if column == 'data':
-                        new_data += value + ' '
-                    elif column == 'descricao':
-                        new_descricao += value + ' '
-                    elif column == 'valor':
-                        new_valor += value + ' '
-                    elif column == 'saldo':
-                        new_saldo += value + ' '
-        new_data = new_data.strip()
-        new_descricao = new_descricao.strip()
-        new_valor = new_valor.replace('R$ ' , '').strip()
-        new_saldo = new_saldo.replace('R$ ' , '').strip()
-
-        new_row = (new_data, new_descricao, new_valor, new_saldo)
-        print(new_row)
-        # agora só falta fazer isso pro dataframe inteiro e voila!!
-
-        # for row in final_df.head(head_num).iterrows():
-        #     for item in row
-        #     print(row[1])
-        #     #result_0.append(row})
-
-
-        # print(final_df)
-        # csv_path = os.path.join('csv_files','fatura_picpay_fevereiro_2024.csv')
-        # later: don't specify the name of the file, but use the same name as read in line 7
-
-        # all_tables.to_csv(csv_path, sep=';', index=True, encoding='utf-8')
-
-        # problema, se lermos linha por linha, nao funcionara em arquivos com muitas linhas"
-
+    def set_output_path(self):
+        self.output_path = os.path.join('csv_files', (self.input_file).replace('.pdf', '.csv'))
     
-
-    def transform2(self):
-        csv_path = os.path.join('csv_files','fatura_picpay_fevereiro_2024_before.csv')
+    def transform(self):
+        csv_path = self.output_path.replace('.csv', '_before.csv')
+        df_concat = pd.concat(self.dataframes)
+        # first csv generated before transforming and cleaning data
+        df_concat.to_csv(csv_path, sep=';', index=True, encoding='utf-8')
         first_df = self.dataframes[0]
         select_columns = list(first_df)[:4]
-        df_concat = pd.concat(self.dataframes)
-        final_df = df_concat[select_columns] # later: select directly the first 4 columns instead of doing line 13
+        final_df = df_concat[select_columns]
         new_column_names =  ['data', 'descricao', 'valor', 'saldo']
         final_df.columns = new_column_names
-        # reseting index to be 
         final_df = final_df.reset_index().astype(str).replace('nan', '')
         final_df = final_df.groupby(final_df.index//3).agg(lambda x: ' '.join(x))
         final_df.to_csv(csv_path.replace('before', 'after'), sep=';', index=True, encoding='utf-8')
 
-        # later: don't specify the name of the file, but use the same name as read in line 7
-
-
 #print("Num of pipes before creating any instances: ", PdfToCsvPipeline.num_of_pipes) 
 PdfToCsvPipeline.set_pipeline_type('pdf2csv') # setter - setting the class variable using a class method
-pdf_path = os.path.join('pdf_files','fatura_picpay_fevereiro_2024.pdf')
-pipeline = PdfToCsvPipeline(pdf_path)
+pipeline = PdfToCsvPipeline('fatura_picpay_fevereiro_2024.pdf')
 #print(pipeline.__dict__) # print a dic with the pipeline object attributes
 pipeline.extract()
-pipeline.transform2()
+pipeline.transform()
 
 # print("Num of pipes created: ", pipeline.num_of_pipes) 
 # print(pipeline.is_weekend(datetime.now()))
